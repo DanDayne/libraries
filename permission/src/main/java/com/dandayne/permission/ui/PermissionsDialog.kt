@@ -29,7 +29,7 @@ class PermissionsDialog : DialogFragment(), PermissionController {
 
     override fun onResume() {
         super.onResume()
-        if (permissionChecker.areAllPermissionsGranted()) onPermissionsGranted()
+        if (permissionChecker.areAllPermissionsGranted()) dismiss()
         (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             if (permissionChecker.areAllPermissionsGranted()) onPermissionsGranted()
             else if (!permissionChecker.areNormalPermissionsGranted())
