@@ -1,6 +1,7 @@
 package com.dandayne.permission
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Environment
 import com.dandayne.permission.ui.PermissionController
@@ -18,15 +19,20 @@ class PermissionChecker(private val permissionController: PermissionController) 
         val request: () -> Unit
     )
 
+    @SuppressLint("InlinedApi")
     private val specialPermissions = mutableListOf<SpecialPermission>().apply {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-            add(
-                SpecialPermission(
-                    Manifest.permission.MANAGE_EXTERNAL_STORAGE,
-                    { Environment.isExternalStorageManager() },
-                    { permissionController.handleFileAccessPermission() }
-                )
+
+        add(
+            SpecialPermission(
+                Manifest.permission.MANAGE_EXTERNAL_STORAGE,
+                { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+                    Environment.isExternalStorageManager() else true
+                },
+                { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+                    permissionController.handleFileAccessPermission()
+                }
             )
+        )
     }
 
     private fun getPermissionsFromManifest(): RequestedPermissions {
