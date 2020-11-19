@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
@@ -14,21 +15,32 @@ import com.dandayne.permission.R
 import com.dandayne.permission.extensions.getAllPermissionsFromManifest
 import com.dandayne.permission.extensions.isPermissionGranted
 
-class PermissionsDialogFragment : DialogFragment(), PermissionController {
+class PermissionsDialog : DialogFragment(), PermissionController {
 
     private val permissionChecker = PermissionChecker(this)
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return AlertDialog.Builder(requireContext())
             .setTitle(R.string.permissions_required)
-            .setPositiveButton(R.string.grant_permissions) { _, _ -> }
+            .setPositiveButton(R.string.check_permissions) { _, _ -> }
+            .setCancelable(false)
             .create()
     }
 
     override fun onResume() {
         super.onResume()
         (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-            runPermissionCheck()
+            if (permissionChecker.areAllPermissionsGranted()) {
+                Toast.makeText(
+                    requireActivity().baseContext,
+                    R.string.permissions_granted,
+                    Toast.LENGTH_SHORT
+                ).show()
+                dismiss()
+            } else if (!permissionChecker.areNormalPermissionsGranted())
+                permissionChecker.requestPermissions()
+            else if (!permissionChecker.areSpecialPermissionsGranted())
+                permissionChecker.requestSpecialPermissions()
         }
     }
 
@@ -84,9 +96,15 @@ class PermissionsDialogFragment : DialogFragment(), PermissionController {
             .show()
     }
 
-    private fun runPermissionCheck() {
-        if (!permissionChecker.areAllPermissionsGranted())
-            if (!permissionChecker.requestPermissions()) onPermissionsNotGranted()
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (permissionChecker.areAllPermissionsGranted()) dismiss()
+        else if (requestCode == REQUEST_CODE_PERMISSIONS)
+            permissionChecker.requestSpecialPermissions()
 
     }
 
@@ -94,4 +112,8 @@ class PermissionsDialogFragment : DialogFragment(), PermissionController {
         requestPermissions(permissions, REQUEST_CODE_PERMISSIONS)
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (permissionChecker.areAllPermissionsGranted()) dismiss()
+    }
 }

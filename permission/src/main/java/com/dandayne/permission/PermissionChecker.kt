@@ -47,17 +47,28 @@ class PermissionChecker(private val permissionController: PermissionController) 
                 !permissionController.isPermissionGranted(it)
             }.toTypedArray()
         )
+        return areAllPermissionsGranted()
+    }
+
+    fun requestSpecialPermissions(): Boolean {
         specialPermissions.filter { !it.check() }.forEach { it.request() }
         return areAllPermissionsGranted()
     }
 
     fun areAllPermissionsGranted(): Boolean =
-        getPermissionsFromManifest().let { permissions ->
-            permissions.normal.all { permissionController.isPermissionGranted(it) } &&
-                permissions.special.all { permissionName ->
-                    specialPermissions.find { it.name == permissionName }?.let { it.check() }
-                        ?: false
-                }
+        areNormalPermissionsGranted() && areSpecialPermissionsGranted()
+
+    fun areNormalPermissionsGranted() = getPermissionsFromManifest().let { permissions ->
+        permissions.normal.all { permissionController.isPermissionGranted(it) }
+    }
+
+    fun areSpecialPermissionsGranted() = getPermissionsFromManifest().let { permissions ->
+        permissions.special.all { permissionName ->
+            specialPermissions.find {
+                it.name == permissionName
+            }?.let { it.check() }
+                ?: false
         }
+    }
 
 }
