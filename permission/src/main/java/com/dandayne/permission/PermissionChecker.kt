@@ -47,18 +47,16 @@ class PermissionChecker(private val permissionController: PermissionController) 
         )
     }
 
-    fun requestPermissions(): Boolean {
+    fun requestPermissions() {
         permissionController.askPermissions(
             getPermissionsFromManifest().normal.filter {
                 !permissionController.isPermissionGranted(it)
             }.toTypedArray()
         )
-        return areAllPermissionsGranted()
     }
 
-    fun requestSpecialPermissions(): Boolean {
+    fun requestSpecialPermissions() {
         specialPermissions.filter { !it.check() }.forEach { it.request() }
-        return areAllPermissionsGranted()
     }
 
     fun areAllPermissionsGranted(): Boolean =

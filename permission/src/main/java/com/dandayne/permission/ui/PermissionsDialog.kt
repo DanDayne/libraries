@@ -29,15 +29,10 @@ class PermissionsDialog : DialogFragment(), PermissionController {
 
     override fun onResume() {
         super.onResume()
+        if (permissionChecker.areAllPermissionsGranted()) onPermissionsGranted()
         (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-            if (permissionChecker.areAllPermissionsGranted()) {
-                Toast.makeText(
-                    requireActivity().baseContext,
-                    R.string.permissions_granted,
-                    Toast.LENGTH_SHORT
-                ).show()
-                dismiss()
-            } else if (!permissionChecker.areNormalPermissionsGranted())
+            if (permissionChecker.areAllPermissionsGranted()) onPermissionsGranted()
+            else if (!permissionChecker.areNormalPermissionsGranted())
                 permissionChecker.requestPermissions()
             else if (!permissionChecker.areSpecialPermissionsGranted())
                 permissionChecker.requestSpecialPermissions()
@@ -96,13 +91,23 @@ class PermissionsDialog : DialogFragment(), PermissionController {
             .show()
     }
 
+    private fun onPermissionsGranted() {
+        Toast.makeText(
+            requireActivity().baseContext,
+            R.string.permissions_granted,
+            Toast.LENGTH_SHORT
+        ).show()
+        dismiss()
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (permissionChecker.areAllPermissionsGranted()) dismiss()
+        if (permissionChecker.areAllPermissionsGranted()) onPermissionsGranted()
+        else if (!permissionChecker.areNormalPermissionsGranted()) onPermissionsNotGranted()
         else if (requestCode == REQUEST_CODE_PERMISSIONS)
             permissionChecker.requestSpecialPermissions()
 
@@ -114,6 +119,7 @@ class PermissionsDialog : DialogFragment(), PermissionController {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (permissionChecker.areAllPermissionsGranted()) dismiss()
+        if (permissionChecker.areAllPermissionsGranted()) onPermissionsGranted()
+        else onPermissionsNotGranted()
     }
 }
